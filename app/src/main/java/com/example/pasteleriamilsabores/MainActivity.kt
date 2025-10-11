@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.pasteleriamilsabores.ui.screen.PasteleriaApp
 import com.example.pasteleriamilsabores.ui.theme.PasteleriaMilSaboresTheme
 import com.example.pasteleriamilsabores.ui.screen.PasteleriaScreen
 
@@ -25,7 +26,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                   PasteleriaScreen()
+                    PasteleriaApp()
                 }
             }
         }

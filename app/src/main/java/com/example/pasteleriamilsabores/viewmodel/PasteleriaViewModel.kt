@@ -1,5 +1,7 @@
 package com.example.pasteleriamilsabores.viewmodel
 
+import android.net.Uri
+import androidx.core.net.toUri
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -8,6 +10,7 @@ import com.example.pasteleriamilsabores.model.CarritoItem
 import com.example.pasteleriamilsabores.model.Producto
 import com.example.pasteleriamilsabores.model.listaProductos
 import kotlinx.coroutines.launch
+import com.example.pasteleriamilsabores.R
 
 class PasteleriaViewModel : ViewModel(){
     private val _productos = mutableStateOf(listaProductos)
@@ -42,6 +45,23 @@ class PasteleriaViewModel : ViewModel(){
                     it
                 }
             }.sortedBy { it.producto.id }
+        }
+    }
+
+    fun agregarNuevoProducto(nombre: String, descripcion: String, precio: Int, imagen: Uri?){
+        viewModelScope.launch {
+            val newId=(_productos.value.maxOfOrNull { it.id }?:0) +1
+
+            val imagenSource: Any = imagen ?: R.drawable.ic_default_cake
+
+            val nuevoProducto = Producto(
+                id = newId,
+                nombre= nombre,
+                descripcion = descripcion,
+                precio = precio,
+                imagenSource = imagenSource
+            )
+            _productos.value = _productos.value + nuevoProducto
         }
     }
 

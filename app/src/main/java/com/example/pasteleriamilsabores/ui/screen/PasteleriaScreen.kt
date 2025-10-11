@@ -1,5 +1,6 @@
 package com.example.pasteleriamilsabores.ui.screen
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -21,15 +22,23 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.pasteleriamilsabores.ui.theme.PasteleriaMilSaboresTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 import com.example.pasteleriamilsabores.model.CarritoItem
 import com.example.pasteleriamilsabores.model.Producto
 import com.example.pasteleriamilsabores.viewmodel.PasteleriaViewModel
 import com.example.pasteleriamilsabores.R
+import com.example.pasteleriamilsabores.navigation.PasteleriaHost
+
+@Composable
+fun PasteleriaApp(){
+    PasteleriaHost()
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PasteleriaScreen(
-    viewModel: PasteleriaViewModel = viewModel()
+    viewModel: PasteleriaViewModel,
+    onNavigateToForm: ()  -> Unit
 ){
     val carritoItems = viewModel.carrito.value
     val productos = viewModel.productos.value
@@ -41,8 +50,15 @@ fun PasteleriaScreen(
         topBar = {
             TopBarPasteleria(
                 carritoItemCount = carritoCount,
-                onCarritoClick = {mostrarCarrito= true}
-            )}
+                onCarritoClick = { mostrarCarrito = true }
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onNavigateToForm) {
+                Icon(Icons.Filled.Add, contentDescription = "Añadir Producto")
+            }
+        }
+
     ) {
         paddingValues ->
         ContenidoPrincipalPasteleria(
@@ -137,8 +153,14 @@ fun CardProductoPasteleria(producto: Producto, onAgregarClick: () -> Unit){
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ){
+            val painter = when (val source = producto.imagenSource){
+                is Int -> painterResource(id = source)
+                is Uri -> rememberAsyncImagePainter(model = source)
+                else -> painterResource(id = R.drawable.ic_default_cake)
+            }
+
             Image(
-                painter = painterResource(id = producto.imagenRes),
+                painter = painter,
                 contentDescription = producto.nombre,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -257,10 +279,15 @@ fun CarritoItemRow(item: CarritoItem, onModificarCantidad: (Producto,Int) -> Uni
     }
 }
 
+
+
 @Preview(showBackground = true)
 @Composable
 fun PasteleriaPreview(){
     PasteleriaMilSaboresTheme {
-        PasteleriaScreen()
+        PasteleriaScreen(
+            viewModel = viewModel(),
+            onNavigateToForm = {}
+        )
     }
 }

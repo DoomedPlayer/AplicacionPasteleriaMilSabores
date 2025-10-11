@@ -1,13 +1,14 @@
 package com.example.pasteleriamilsabores.model
 
 import com.example.pasteleriamilsabores.R
+import  android.net.Uri
 
 data class Producto(
     val id: Int,
     val nombre: String,
     val descripcion: String,
     val precio: Int,
-    val imagenRes: Int
+    val imagenSource: Any
 )
 
 data class CarritoItem(
