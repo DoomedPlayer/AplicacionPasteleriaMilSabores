@@ -1,8 +1,11 @@
 package com.example.pasteleriamilsabores.ui.screen
 
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.DarkMode
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,14 +35,26 @@ import com.example.pasteleriamilsabores.navigation.PasteleriaHost
 
 @Composable
 fun PasteleriaApp(){
-    PasteleriaHost()
+    val systemDarkMode = isSystemInDarkTheme()
+    var isDarkMode by rememberSaveable { mutableStateOf(systemDarkMode) } //
+
+    // 2. Aplicar el tema (PasteleriaMilSaboresTheme) con el estado
+    PasteleriaMilSaboresTheme(darkTheme = isDarkMode) { //
+        // 3. Llamar a PasteleriaHost pasándole el estado y el alternador
+        PasteleriaHost(
+            isDarkMode = isDarkMode,
+            onToggleDarkMode = { isDarkMode = !isDarkMode }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PasteleriaScreen(
     viewModel: PasteleriaViewModel,
-    onNavigateToForm: ()  -> Unit
+    onNavigateToForm: ()  -> Unit,
+    isDarkMode: Boolean,
+    onToggleDarkMode: () -> Unit
 ){
     val carritoItems = viewModel.carrito.value
     val productos = viewModel.productos.value
@@ -50,7 +66,9 @@ fun PasteleriaScreen(
         topBar = {
             TopBarPasteleria(
                 carritoItemCount = carritoCount,
-                onCarritoClick = { mostrarCarrito = true }
+                onCarritoClick = { mostrarCarrito = true },
+                isDarkMode = isDarkMode,
+                onToggleDarkMode = onToggleDarkMode
             )
         },
         floatingActionButton = {
@@ -84,7 +102,9 @@ fun PasteleriaScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBarPasteleria(carritoItemCount: Int, onCarritoClick: () -> Unit){
+fun TopBarPasteleria(carritoItemCount: Int, onCarritoClick: () -> Unit,
+                     isDarkMode: Boolean,
+                     onToggleDarkMode: () -> Unit){
     TopAppBar(
         title = {
             Text(
@@ -94,6 +114,14 @@ fun TopBarPasteleria(carritoItemCount: Int, onCarritoClick: () -> Unit){
             )
         },
         actions = {
+
+            IconButton(onClick = onToggleDarkMode) {
+                Icon(
+                    imageVector = if (isDarkMode) Icons.Filled.LightMode else Icons.Filled.DarkMode,
+                    contentDescription = "Alternar modo oscuro"
+                )
+            }
+
             BadgedBox(
                 badge = {
                     if (carritoItemCount > 0){
@@ -284,10 +312,14 @@ fun CarritoItemRow(item: CarritoItem, onModificarCantidad: (Producto,Int) -> Uni
 @Preview(showBackground = true)
 @Composable
 fun PasteleriaPreview(){
+    var isDarkMode = true
+
     PasteleriaMilSaboresTheme {
         PasteleriaScreen(
             viewModel = viewModel(),
-            onNavigateToForm = {}
+            onNavigateToForm = {},
+            isDarkMode = isDarkMode,
+            onToggleDarkMode = {}
         )
     }
 }
