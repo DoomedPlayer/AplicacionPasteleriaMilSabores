@@ -10,11 +10,13 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pasteleriamilsabores.ui.screen.PasteleriaScreen
 import com.example.pasteleriamilsabores.ui.screen.FormularioScreen
+import com.example.pasteleriamilsabores.ui.screen.PagoScreen
 import com.example.pasteleriamilsabores.viewmodel.PasteleriaViewModel
 
 sealed class PasteleriaVista{
     data object Lista: PasteleriaVista()
     data object Formulario: PasteleriaVista()
+    data object Pago: PasteleriaVista()
 }
 
 
@@ -28,18 +30,26 @@ fun PasteleriaHost(
     var vistaActual by remember { mutableStateOf<PasteleriaVista>(PasteleriaVista.Lista) }
     val navigateToForm: () -> Unit = {vistaActual = PasteleriaVista.Formulario}
     val navigateToList: () -> Unit = {vistaActual = PasteleriaVista.Lista}
+    val navigateToPago: () -> Unit = {vistaActual = PasteleriaVista.Pago}
 
     when (vistaActual){
         is PasteleriaVista.Lista ->{
             PasteleriaScreen(
                 viewModel = viewModel,
                 onNavigateToForm = navigateToForm,
+                onNavigateToPago = navigateToPago,
                 isDarkMode = isDarkMode,
                 onToggleDarkMode = onToggleDarkMode
             )
         }
         is PasteleriaVista.Formulario ->{
             FormularioScreen(
+                viewModel = viewModel,
+                onNavigateBack = navigateToList
+            )
+        }
+        is PasteleriaVista.Pago -> {
+            PagoScreen(
                 viewModel = viewModel,
                 onNavigateBack = navigateToList
             )

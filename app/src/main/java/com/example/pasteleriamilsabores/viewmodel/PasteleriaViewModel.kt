@@ -1,20 +1,29 @@
 package com.example.pasteleriamilsabores.viewmodel
 
+import android.app.Application
 import android.net.Uri
-import androidx.core.net.toUri
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pasteleriamilsabores.model.CarritoItem
 import com.example.pasteleriamilsabores.model.Producto
-import com.example.pasteleriamilsabores.model.listaProductos
 import kotlinx.coroutines.launch
 import com.example.pasteleriamilsabores.R
+import com.example.pasteleriamilsabores.data.PasteleriaDatabase
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 
-class PasteleriaViewModel : ViewModel(){
-    private val _productos = mutableStateOf(listaProductos)
-    val productos: State<List<Producto>> = _productos
+class PasteleriaViewModel(application: Application) : AndroidViewModel(application){
+
+    private val productoDao = PasteleriaDatabase.getDatabase(application).productoDao()
+    val productos: StateFlow<List<Producto>> = productoDao.getAll()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000L),
+            initialValue = emptyList()
+        )
 
     private val _carrito = mutableStateOf(emptyList<CarritoItem>())
     val carrito: State<List<CarritoItem>> = _carrito
@@ -50,19 +59,21 @@ class PasteleriaViewModel : ViewModel(){
 
     fun agregarNuevoProducto(nombre: String, descripcion: String, precio: Int, imagen: Uri?){
         viewModelScope.launch {
-            val newId=(_productos.value.maxOfOrNull { it.id }?:0) +1
 
-            val imagenSource: Any = imagen ?: R.drawable.ic_default_cake
 
             val nuevoProducto = Producto(
-                id = newId,
                 nombre= nombre,
                 descripcion = descripcion,
                 precio = precio,
-                imagenSource = imagenSource
+                imagenSource = imagen?.toString()
             )
-            _productos.value = _productos.value + nuevoProducto
+            productoDao.insert(nuevoProducto)
         }
+    }
+    fun limpiarCarrito() {
+        _carrito.value = emptyList()
+        // También es importante recalcular el total
+        totalCarrito
     }
 
 }

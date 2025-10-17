@@ -32,6 +32,7 @@ import com.example.pasteleriamilsabores.model.Producto
 import com.example.pasteleriamilsabores.viewmodel.PasteleriaViewModel
 import com.example.pasteleriamilsabores.R
 import com.example.pasteleriamilsabores.navigation.PasteleriaHost
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun PasteleriaApp(){
@@ -53,11 +54,12 @@ fun PasteleriaApp(){
 fun PasteleriaScreen(
     viewModel: PasteleriaViewModel,
     onNavigateToForm: ()  -> Unit,
+    onNavigateToPago: ()  -> Unit,
     isDarkMode: Boolean,
     onToggleDarkMode: () -> Unit
 ){
     val carritoItems = viewModel.carrito.value
-    val productos = viewModel.productos.value
+    val productos by viewModel.productos.collectAsStateWithLifecycle()
     val total = viewModel.totalCarrito
     val carritoCount = carritoItems.sumOf { it.cantidad }
 
@@ -94,7 +96,11 @@ fun PasteleriaScreen(
                 carritoItems = carritoItems,
                 onModificarCantidad = viewModel::modificarCantidad,
                 total = total,
-                onCerrar = {mostrarCarrito = false}
+                onCerrar = {mostrarCarrito = false},
+                onProcederPago = {
+                    mostrarCarrito = false
+                    onNavigateToPago()
+                }
             )
         }
     }
@@ -109,7 +115,7 @@ fun TopBarPasteleria(carritoItemCount: Int, onCarritoClick: () -> Unit,
         title = {
             Text(
                 text= "Pasteleria Mil Sabores",
-                style = MaterialTheme.typography.headlineLarge,
+                style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.primary
             )
         },
@@ -181,10 +187,11 @@ fun CardProductoPasteleria(producto: Producto, onAgregarClick: () -> Unit){
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ){
-            val painter = when (val source = producto.imagenSource){
-                is Int -> painterResource(id = source)
-                is Uri -> rememberAsyncImagePainter(model = source)
-                else -> painterResource(id = R.drawable.ic_default_cake)
+            val imageUri = producto.imagenSource?.let { Uri.parse(it) }
+            val painter = if(imageUri != null){
+                rememberAsyncImagePainter(model = imageUri)
+            }else{
+                painterResource(id = R.drawable.ic_default_cake)
             }
 
             Image(
@@ -226,7 +233,8 @@ fun CarritoSheetContent(
     carritoItems: List<CarritoItem>,
     onModificarCantidad: (Producto, Int) -> Unit,
     total: Int,
-    onCerrar: () -> Unit
+    onCerrar: () -> Unit,
+    onProcederPago: () -> Unit
 ){
     Column(modifier = Modifier.padding(16.dp)) {
         Row(
@@ -269,7 +277,7 @@ fun CarritoSheetContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = {},
+                onClick = onProcederPago,
                 modifier = Modifier.fillMaxWidth().height(56.dp)
             ) {
                 Text("Proceder al Pago")
@@ -318,6 +326,7 @@ fun PasteleriaPreview(){
         PasteleriaScreen(
             viewModel = viewModel(),
             onNavigateToForm = {},
+            onNavigateToPago = {},
             isDarkMode = isDarkMode,
             onToggleDarkMode = {}
         )
