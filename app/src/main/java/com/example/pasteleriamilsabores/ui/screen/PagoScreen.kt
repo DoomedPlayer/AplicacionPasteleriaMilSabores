@@ -2,9 +2,13 @@ package com.example.pasteleriamilsabores.ui.screen
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
+import android.os.Build
 import kotlinx.coroutines.suspendCancellableCoroutine
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -43,18 +47,21 @@ import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManager
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import java.io.IOException
-import android.os.Build
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.example.pasteleriamilsabores.R
 import kotlinx.coroutines.delay
 
 typealias LocationCoordinate = Pair<Double, Double>
 
+private const val NOTIFICATION_CHANNEL_ID = "pago_exitoso_channel"
+private const val NOTIFICATION_ID = 1
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +83,27 @@ fun PagoScreen(
 
     // Estado de carga
     var isLoading by remember { mutableStateOf(false) }
+
+    val requestPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permiso concedido, no es necesario hacer nada extra aquí.
+        } else {
+            Toast.makeText(context, "No se podrán mostrar notificaciones.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        createNotificationChannel(context)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -127,7 +155,6 @@ fun PagoScreen(
                 item {
                     Button(
                         onClick = {
-                            // --- LÓGICA DE VALIDACIÓN ---
                             val isNombreValido = nombre.trim().contains(" ") && nombre.trim().length > 3
                             val isTelefonoValido = telefono.length == 9
 
@@ -135,10 +162,10 @@ fun PagoScreen(
                             telefonoError = !isTelefonoValido
 
                             if (isNombreValido && isTelefonoValido) {
-                                // --- INICIA PROCESO DE PAGO ---
                                 isLoading = true
                                 coroutineScope.launch {
-                                    delay(2000) // Simula una llamada a la red de 2 segundos
+                                    delay(2000)
+                                    showPagoExitosoNotification(context, total)
                                     viewModel.limpiarCarrito()
                                     Toast.makeText(context, "Pedido realizado con éxito", Toast.LENGTH_LONG).show()
                                     isLoading = false
@@ -168,6 +195,31 @@ fun PagoScreen(
     }
 }
 
+private fun createNotificationChannel(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val name = "Pagos Exitosos"
+        val descriptionText = "Canal para notificar pagos realizados correctamente."
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance).apply {
+            description = descriptionText
+        }
+        val notificationManager: NotificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+}
+
+private fun showPagoExitosoNotification(context: Context, total: Int) {
+    val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+        .setSmallIcon(R.drawable.ic_launcher_foreground)
+        .setContentTitle("¡Pedido en camino!")
+        .setContentText("Tu pago de $$total ha sido procesado con éxito.")
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setAutoCancel(true)
+
+    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    notificationManager.notify(NOTIFICATION_ID, builder.build())
+}
 
 @Composable
 fun ResumenPedido(items: List<CarritoItem>, total: Int){
