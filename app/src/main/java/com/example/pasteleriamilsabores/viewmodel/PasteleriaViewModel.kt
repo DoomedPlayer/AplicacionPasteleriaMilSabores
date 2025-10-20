@@ -9,8 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.pasteleriamilsabores.model.CarritoItem
 import com.example.pasteleriamilsabores.model.Producto
 import kotlinx.coroutines.launch
-import com.example.pasteleriamilsabores.R
-import com.example.pasteleriamilsabores.data.PasteleriaDatabase
+import com.example.pasteleriamilsabores.model.PasteleriaDatabase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn

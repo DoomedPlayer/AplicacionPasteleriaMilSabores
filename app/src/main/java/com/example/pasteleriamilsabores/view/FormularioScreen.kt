@@ -1,4 +1,4 @@
-package com.example.pasteleriamilsabores.ui.screen
+package com.example.pasteleriamilsabores.view
 
 import android.content.Intent
 import androidx.compose.foundation.layout.*
@@ -18,12 +18,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import coil.compose.rememberAsyncImagePainter
-import com.example.pasteleriamilsabores.R
 
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -1,16 +1,14 @@
 package com.example.pasteleriamilsabores.navigation
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.pasteleriamilsabores.ui.screen.PasteleriaScreen
-import com.example.pasteleriamilsabores.ui.screen.FormularioScreen
-import com.example.pasteleriamilsabores.ui.screen.PagoScreen
+import com.example.pasteleriamilsabores.view.PasteleriaScreen
+import com.example.pasteleriamilsabores.view.FormularioScreen
+import com.example.pasteleriamilsabores.view.PagoScreen
 import com.example.pasteleriamilsabores.viewmodel.PasteleriaViewModel
 
 sealed class PasteleriaVista{

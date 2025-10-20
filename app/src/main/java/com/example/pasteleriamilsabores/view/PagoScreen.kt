@@ -1,4 +1,4 @@
-package com.example.pasteleriamilsabores.ui.screen
+package com.example.pasteleriamilsabores.view
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -57,6 +57,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.example.pasteleriamilsabores.R
 import kotlinx.coroutines.delay
+import java.util.Locale
 
 typealias LocationCoordinate = Pair<Double, Double>
 
@@ -465,7 +466,7 @@ private suspend fun geocodeAddress(context: Context, address: String, comuna: St
 }
 
 private suspend fun reverseGeocodeLocation(context: Context, location: LocationCoordinate): Pair<String, String>? {
-    val geocoder = Geocoder(context, java.util.Locale.getDefault())
+    val geocoder = Geocoder(context, Locale.getDefault())
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         return suspendCancellableCoroutine { continuation ->

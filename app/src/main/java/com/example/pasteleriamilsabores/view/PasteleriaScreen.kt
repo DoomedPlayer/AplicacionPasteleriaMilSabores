@@ -1,4 +1,4 @@
-package com.example.pasteleriamilsabores.ui.screen
+package com.example.pasteleriamilsabores.view
 
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.DarkMode

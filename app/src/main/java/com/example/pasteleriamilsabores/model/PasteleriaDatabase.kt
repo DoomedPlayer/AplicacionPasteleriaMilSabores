@@ -1,4 +1,4 @@
-package com.example.pasteleriamilsabores.data
+package com.example.pasteleriamilsabores.model
 
 import android.content.Context
 import androidx.room.Database
@@ -6,7 +6,6 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.pasteleriamilsabores.R
-import com.example.pasteleriamilsabores.model.Producto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -35,7 +34,7 @@ abstract  class PasteleriaDatabase: RoomDatabase() {
         }
     }
 
-    private class DatabaseCallback(private val context: Context) : RoomDatabase.Callback(){
+    private class DatabaseCallback(private val context: Context) : Callback(){
         override fun onCreate(db: SupportSQLiteDatabase){
             super.onCreate(db)
             INSTANCE?.let { database ->
