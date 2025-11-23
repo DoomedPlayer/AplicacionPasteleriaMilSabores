@@ -33,6 +33,10 @@ import com.example.pasteleriamilsabores.viewmodel.PasteleriaViewModel
 import com.example.pasteleriamilsabores.R
 import com.example.pasteleriamilsabores.navigation.PasteleriaHost
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.text.style.TextOverflow
+import com.example.pasteleriamilsabores.model.MealApi
+import androidx.compose.foundation.lazy.LazyRow
+import coil.request.ImageRequest
 
 @Composable
 fun PasteleriaApp(){
@@ -60,9 +64,10 @@ fun PasteleriaScreen(
 ){
     val carritoItems = viewModel.carrito.value
     val productos by viewModel.productos.collectAsStateWithLifecycle()
+    val postresInspiracion by viewModel.postresInspiracion.collectAsStateWithLifecycle()
+    val cargandoInspiracion by viewModel.cargandoInspiracion.collectAsStateWithLifecycle()
     val total = viewModel.totalCarrito
     val carritoCount = carritoItems.sumOf { it.cantidad }
-
     var mostrarCarrito by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
@@ -84,7 +89,10 @@ fun PasteleriaScreen(
         ContenidoPrincipalPasteleria(
             paddingValues=paddingValues,
             productos= productos,
-            onAgregarClick = viewModel::agregarCarrito
+            postresInspiracion = postresInspiracion,
+            onAgregarClick = viewModel::agregarCarrito,
+            onFavoriteClick = viewModel::toggleFavorito,
+            cargandoInspiracion = cargandoInspiracion
         )
     }
     if (mostrarCarrito){
@@ -150,7 +158,10 @@ fun TopBarPasteleria(carritoItemCount: Int, onCarritoClick: () -> Unit,
 fun ContenidoPrincipalPasteleria(
     paddingValues: PaddingValues,
     productos: List<Producto>,
-    onAgregarClick: (Producto) -> Unit
+    postresInspiracion: List<MealApi>,
+    cargandoInspiracion: Boolean,
+    onAgregarClick: (Producto) -> Unit,
+    onFavoriteClick: (Producto) -> Unit
 ){
     LazyColumn(
         modifier = Modifier
@@ -166,68 +177,176 @@ fun ContenidoPrincipalPasteleria(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
-        items(productos, key = {it.id}){ producto ->
+        if (postresInspiracion.isNotEmpty()) {
+            item {
+                Text(
+                    text = "Inspiración del Mundo \uD83C\uDF0D",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(4.dp)
+                ) {
+                    if (cargandoInspiracion) {
+                        items(3) {
+                            SkeletonCardInspiracion()
+                        }
+                    } else {
+                        items(postresInspiracion) { meal ->
+                            CardInspiracion(meal)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+        items(productos, key = {it.code}){ producto ->
             CardProductoPasteleria(
                 producto= producto,
-                onAgregarClick = { onAgregarClick(producto)}
+                onAgregarClick = { onAgregarClick(producto)},
+                onFavoriteClick = { onFavoriteClick(producto)}
             )
         }
     }
 }
 
 @Composable
-fun CardProductoPasteleria(producto: Producto, onAgregarClick: () -> Unit){
+fun CardProductoPasteleria(producto: Producto, onAgregarClick: () -> Unit, onFavoriteClick: () -> Unit){
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp)
     ){
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ){
-            val imageUri = producto.imagenSource?.let { Uri.parse(it) }
-            val painter = if(imageUri != null){
-                rememberAsyncImagePainter(model = imageUri)
-            }else{
-                painterResource(id = R.drawable.ic_default_cake)
-            }
-
-            Image(
-                painter = painter,
-                contentDescription = producto.nombre,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(90.dp)
-                    .clip(RoundedCornerShape(8.dp))
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = producto.nombre,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "$${producto.precio}",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.ExtraBold
-                )
-            }
-            Button(
-                onClick = onAgregarClick,
-                modifier = Modifier.padding(start = 8.dp)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Filled.Add, contentDescription = "Añadir a carrito", modifier = Modifier.size(20.dp))
+                val imageUri = producto.image.let { Uri.parse(it) }
+                val painter = if (imageUri != null) {
+                    rememberAsyncImagePainter(model = imageUri)
+                } else {
+                    painterResource(id = R.drawable.ic_default_cake)
+                }
+
+                Image(
+                    painter = painter,
+                    contentDescription = producto.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(90.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = producto.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "$${producto.price}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+                Button(
+                    onClick = onAgregarClick,
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = "Añadir a carrito",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
             }
         }
     }
 }
 
+@Composable
+fun CardInspiracion(meal: MealApi) {
+    Card(
+        modifier = Modifier
+            .width(160.dp)
+            .height(180.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column {
+            val context = androidx.compose.ui.platform.LocalContext.current
+
+            Image(
+                painter = rememberAsyncImagePainter(
+                    model = ImageRequest.Builder(context)
+                        .data(meal.image.replace("http:","https:"))
+                        .crossfade(true)
+                        .size(300,300)
+                        .placeholder(R.drawable.ic_default_cake)
+                        .error(R.drawable.ic_launcher_foreground)
+                        .build()
+                ),
+                contentDescription = meal.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(110.dp)
+            )
+
+            Column(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = meal.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SkeletonCardInspiracion() {
+    Card(
+        modifier = Modifier
+            .width(160.dp)
+            .height(180.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(110.dp)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+            )
+            Box(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .width(100.dp)
+                    .height(20.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+            )
+        }
+    }
+}
 @Composable
 fun CarritoSheetContent(
     carritoItems: List<CarritoItem>,
@@ -260,13 +379,13 @@ fun CarritoSheetContent(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(carritoItems,key =  {it.producto.id}){ item ->
+                items(carritoItems,key =  {it.producto.code}){ item ->
                     CarritoItemRow(item, onModificarCantidad)
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            val total = carritoItems.sumOf{it.producto.precio * it.cantidad}
+            val total = carritoItems.sumOf{it.producto.price * it.cantidad}
             Text(
                 text = "Total: $${total}",
                 style = MaterialTheme.typography.titleLarge,
@@ -297,8 +416,8 @@ fun CarritoItemRow(item: CarritoItem, onModificarCantidad: (Producto,Int) -> Uni
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(item.producto.nombre, fontWeight = FontWeight.SemiBold)
-            Text("$${item.producto.precio}", style = MaterialTheme.typography.bodySmall)
+            Text(item.producto.name, fontWeight = FontWeight.SemiBold)
+            Text("$${item.producto.price}", style = MaterialTheme.typography.bodySmall)
         }
         Row(
             verticalAlignment = Alignment.CenterVertically

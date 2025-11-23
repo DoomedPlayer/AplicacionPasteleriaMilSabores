@@ -240,8 +240,8 @@ fun ResumenPedido(items: List<CarritoItem>, total: Int){
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("${item.cantidad}x ${item.producto.nombre}")
-                    Text("$${item.producto.precio * item.cantidad}")
+                    Text("${item.cantidad}x ${item.producto.name}")
+                    Text("$${item.producto.price * item.cantidad}")
                 }
             }
             Divider(modifier = Modifier.padding(vertical = 8.dp))

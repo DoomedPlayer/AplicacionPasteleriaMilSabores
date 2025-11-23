@@ -154,7 +154,16 @@ fun FormularioScreen (
             Button(
                 onClick = {
                     if (esFormularioValido){
-                        viewModel.agregarNuevoProducto(nombre,descripcion,precioInt,imagenUri)
+                        val nuevoId = (System.currentTimeMillis() % 100000).toInt()
+                        viewModel.agregarNuevoProducto(
+                            id = nuevoId,
+                            nombre = nombre,
+                            descripcion = descripcion,
+                            precio = precioInt,
+                            categoria = "General",
+                            tipo = "Pastel",
+                            imagen = imagenUri
+                        )
                         onNavigateBack()
                     }
                 },
