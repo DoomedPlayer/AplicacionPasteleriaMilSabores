@@ -19,12 +19,6 @@ interface ProductoDao {
     @Query("SELECT * FROM productos ORDER BY code ASC")
     fun getAll(): Flow<List<Producto>>
 
-    @Query("UPDATE productos SET isFavorite = :esFavorito WHERE code = :id")
-    suspend fun updateFavorite(id: Int, esFavorito: Boolean)
-
-    @Query("SELECT code FROM productos WHERE isFavorite = 1")
-    suspend fun getFavoriteIds(): List<Int>
-
     @Update
     suspend fun update(producto: Producto)
 

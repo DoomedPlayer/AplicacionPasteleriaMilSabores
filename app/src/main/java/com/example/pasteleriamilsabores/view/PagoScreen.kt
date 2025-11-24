@@ -82,14 +82,12 @@ fun PagoScreen(
     var nombreError by rememberSaveable { mutableStateOf(false) }
     var telefonoError by rememberSaveable { mutableStateOf(false) }
 
-    // Estado de carga
     var isLoading by remember { mutableStateOf(false) }
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            // Permiso concedido, no es necesario hacer nada extra aquí.
         } else {
             Toast.makeText(context, "No se podrán mostrar notificaciones.", Toast.LENGTH_SHORT).show()
         }
@@ -130,19 +128,17 @@ fun PagoScreen(
                     ResumenPedido(items = carritoItem, total = total)
                 }
                 item {
-                    // Pasa los estados y los callbacks al formulario
                     FormularioDespacho(
                         nombre = nombre,
                         onNombreChange = {
                             nombre = it
-                            nombreError = false // Limpia el error al escribir
+                            nombreError = false
                         },
                         telefono = telefono,
                         onTelefonoChange = {
-                            // Solo permite 9 dígitos numéricos
                             if (it.length <= 9 && it.all { char -> char.isDigit() }) {
                                 telefono = it
-                                telefonoError = false // Limpia el error al escribir
+                                telefonoError = false
                             }
                         },
                         direccion = direccion,
@@ -266,7 +262,6 @@ fun FormularioDespacho(
     onDireccionChange: (String) -> Unit,
     comuna: String,
     onComunaChange: (String) -> Unit,
-    // Parámetros para los errores
     nombreError: Boolean,
     telefonoError: Boolean
 
@@ -280,8 +275,7 @@ fun FormularioDespacho(
         onResult = { isGranted ->
             if (isGranted) {
                 fetchLastLocation(context) { location ->
-                    userLocation = location // Actualiza el mapa
-                    // NUEVO: Inicia la geocodificación inversa para obtener la dirección
+                    userLocation = location
                     coroutineScope.launch {
                         val addressDetails = reverseGeocodeLocation(context, location)
                         if (addressDetails != null) {
@@ -410,7 +404,7 @@ fun MapboxView(
     AndroidView(
         factory = {
             mapView.apply {
-                val initialPoint = Point.fromLngLat(-70.6483, -33.4569) // Santiago
+                val initialPoint = Point.fromLngLat(-70.6483, -33.4569)
                 getMapboxMap().setCamera(
                     CameraOptions.Builder()
                         .center(initialPoint)
@@ -477,15 +471,15 @@ private suspend fun reverseGeocodeLocation(context: Context, location: LocationC
                             val address = addresses[0]
                             val streetAddress = "${address.thoroughfare ?: ""} ${address.subThoroughfare ?: ""}".trim()
                             val comuna = address.locality ?: address.subAdminArea ?: ""
-                            continuation.resume(Pair(streetAddress, comuna)) { /* on cancellation */ }
+                            continuation.resume(Pair(streetAddress, comuna)) {  }
                         } else {
-                            continuation.resume(null) { /* on cancellation */ }
+                            continuation.resume(null) { }
                         }
                     }
 
                     override fun onError(errorMessage: String?) {
                         super.onError(errorMessage)
-                        continuation.resume(null) { /* on cancellation */ }
+                        continuation.resume(null) {  }
                     }
                 }
             )

@@ -16,10 +16,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 
-class PasteleriaViewModel(application: Application) : AndroidViewModel(application){
-
-    private val database = PasteleriaDatabase.getDatabase(application)
-    private val repository= PasteleriaRepository(database.productoDao())
+class PasteleriaViewModel(
+    application: Application,
+    private val repository: PasteleriaRepository = PasteleriaRepository(PasteleriaDatabase.getDatabase(application).productoDao())
+) : AndroidViewModel(application) {
 
     private val _postresInspiracion = MutableStateFlow<List<MealApi>>(emptyList())
     val postresInspiracion: StateFlow<List<MealApi>> = _postresInspiracion.asStateFlow()
@@ -100,12 +100,6 @@ class PasteleriaViewModel(application: Application) : AndroidViewModel(applicati
 
     fun limpiarCarrito() {
         _carrito.value = emptyList()
-    }
-
-    fun toggleFavorito(producto: Producto) {
-        viewModelScope.launch {
-            repository.toggleFavorito(producto.code, producto.isFavorite)
-        }
     }
 
     fun seleccionarRecetaInspiracion(idMeal: String) {

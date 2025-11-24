@@ -13,8 +13,7 @@ data class Producto(
     val price: Int,
     val type: String,
     val description: String,
-    val image: String,
-    val isFavorite: Boolean = false
+    val image: String
 )
 data class CarritoItem(
     val producto: Producto,

@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.testing.Test
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -44,6 +45,18 @@ android {
 
 dependencies {
 
+    testImplementation("io.mockk:mockk:1.13.12")
+    testImplementation("io.mockk:mockk-android:1.13.12")
+
+    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
+    testImplementation("io.kotest:kotest-property:5.9.1")
+
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+
+
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
@@ -73,4 +86,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+tasks.withType<Test> {
+    useJUnitPlatform()
 }

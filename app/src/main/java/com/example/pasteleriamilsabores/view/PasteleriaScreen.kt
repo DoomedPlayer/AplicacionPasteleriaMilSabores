@@ -45,10 +45,7 @@ enum class ModoInteraccion { NORMAL, EDITAR, ELIMINAR }
 fun PasteleriaApp(){
     val systemDarkMode = isSystemInDarkTheme()
     var isDarkMode by rememberSaveable { mutableStateOf(systemDarkMode) } //
-
-    // 2. Aplicar el tema (PasteleriaMilSaboresTheme) con el estado
     PasteleriaMilSaboresTheme(darkTheme = isDarkMode) { //
-        // 3. Llamar a PasteleriaHost pasándole el estado y el alternador
         PasteleriaHost(
             isDarkMode = isDarkMode,
             onToggleDarkMode = { isDarkMode = !isDarkMode }
@@ -78,7 +75,7 @@ fun PasteleriaScreen(
     var menuExpandido by remember { mutableStateOf(false) }
     var modoActual by remember { mutableStateOf(ModoInteraccion.NORMAL) }
     Scaffold(
-        topBar = { /* ... Tu TopBar existente ... */
+        topBar = {
             TopBarPasteleria(carritoCount, { mostrarCarrito = true }, isDarkMode, onToggleDarkMode)
         },
         floatingActionButton = {
@@ -113,8 +110,6 @@ fun PasteleriaScreen(
                         modifier = Modifier.padding(bottom = 8.dp).size(48.dp)
                     ) { Icon(Icons.Filled.Delete, "Eliminar") }
                 }
-
-                // Botón Principal (Configuración)
                 FloatingActionButton(onClick = { menuExpandido = !menuExpandido }) {
                     Icon(if (menuExpandido) Icons.Filled.Close else Icons.Filled.Settings, "Config")
                 }
@@ -137,26 +132,24 @@ fun PasteleriaScreen(
                 }
             }
             ContenidoPrincipalPasteleria(
-                paddingValues = PaddingValues(0.dp), // Ya controlamos el padding arriba
+                paddingValues = PaddingValues(0.dp),
                 productos = productos,
                 postresInspiracion = postresInspiracion,
                 cargandoInspiracion = cargandoInspiracion,
                 onAgregarClick = { producto ->
-                    // LÓGICA MAESTRA: Qué hacer al tocar un producto según el modo
                     when (modoActual) {
                         ModoInteraccion.NORMAL -> viewModel.agregarCarrito(producto)
                         ModoInteraccion.EDITAR -> {
                             onNavigateToModificar(producto.code)
                             modoActual =
-                                ModoInteraccion.NORMAL // Opcional: salir del modo editar tras click
+                                ModoInteraccion.NORMAL
                         }
 
                         ModoInteraccion.ELIMINAR -> viewModel.eliminarProducto(producto)
                     }
                 },
                 onInspiracionClick = { idMeal -> viewModel.seleccionarRecetaInspiracion(idMeal) },
-                onFavoriteClick = viewModel::toggleFavorito,
-                modoActual = modoActual // Pasamos el modo a la lista
+                modoActual = modoActual
             )
         }
 
@@ -195,7 +188,7 @@ fun PasteleriaScreen(
                         Image(
                             painter = rememberAsyncImagePainter(
                                 model = ImageRequest.Builder(context)
-                                    .data(receta.image.replace("http:","https:")) // Fix seguridad http
+                                    .data(receta.image.replace("http:","https:"))
                                     .crossfade(true).build()
                             ),
                             contentDescription = null,
@@ -283,7 +276,6 @@ fun ContenidoPrincipalPasteleria(
     cargandoInspiracion: Boolean,
     onInspiracionClick: (String) -> Unit,
     onAgregarClick: (Producto) -> Unit,
-    onFavoriteClick: (Producto) -> Unit,
     modoActual: ModoInteraccion
 ) {
     LazyColumn(
@@ -334,7 +326,6 @@ fun ContenidoPrincipalPasteleria(
             CardProductoPasteleria(
                 producto = producto,
                 onAgregarClick = { onAgregarClick(producto) },
-                onFavoriteClick = { onFavoriteClick(producto) },
                 modoActual = modoActual
             )
         }
@@ -346,10 +337,8 @@ fun ContenidoPrincipalPasteleria(
 fun CardProductoPasteleria(
     producto: Producto,
     onAgregarClick: () -> Unit,
-    onFavoriteClick: () -> Unit,
     modoActual: ModoInteraccion
 ){
-    // Cambiamos el estilo de la tarjeta según el modo para dar feedback visual
     val containerColor = when(modoActual) {
         ModoInteraccion.ELIMINAR -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
         ModoInteraccion.EDITAR -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
@@ -362,7 +351,6 @@ fun CardProductoPasteleria(
         colors = CardDefaults.cardColors(containerColor = containerColor),
         shape = RoundedCornerShape(12.dp),
         onClick = {
-            // Si estamos en modo edición/borrado, hacer click en la tarjeta dispara la acción
             if (modoActual != ModoInteraccion.NORMAL) onAgregarClick()
         }
     ){
@@ -371,9 +359,8 @@ fun CardProductoPasteleria(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // ... (Código de imagen igual) ...
                 val imageUri = producto.image.let { Uri.parse(it) }
-                val painter = if (imageUri != null) rememberAsyncImagePainter(model = imageUri) else painterResource(id = R.drawable.ic_launcher_foreground) // Ajusta tu recurso default
+                val painter = if (imageUri != null) rememberAsyncImagePainter(model = imageUri) else painterResource(id = R.drawable.ic_default_cake)
 
                 Image(
                     painter = painter,
@@ -389,7 +376,6 @@ fun CardProductoPasteleria(
                     Text(text = "$${producto.price}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                 }
 
-                // Botón de acción: Cambia el ícono según el modo
                 IconButton(
                     onClick = onAgregarClick,
                     modifier = Modifier
