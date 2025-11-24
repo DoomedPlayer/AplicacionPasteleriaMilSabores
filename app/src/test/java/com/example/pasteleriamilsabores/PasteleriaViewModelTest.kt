@@ -34,8 +34,8 @@ class PasteleriaViewModelTest : BehaviorSpec({
     val repository = mockk<PasteleriaRepository>(relaxed = true)
     val application = mockk<Application>(relaxed = true)
 
-    val producto1 = Producto(1, "Torta Chocolate", "Rica", 1000,"General", "Pastel", "", false)
-    val producto2 = Producto(2, "Pie de Limón", "Acido", 2000,"General", "Pie",  "", false)
+    val producto1 = Producto(1, "Torta Chocolate", "Rica", 1000,"General", "Pastel", "")
+    val producto2 = Producto(2, "Pie de Limón", "Acido", 2000,"General", "Pie",  "" )
 
     Given("Un ViewModel de Pastelería vacío") {
 

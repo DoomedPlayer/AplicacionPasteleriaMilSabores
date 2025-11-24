@@ -19,3 +19,13 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+-keep class com.example.pasteleriamilsabores.model.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*
+-dontwarn retrofit2.**
+-keep class retrofit2.** { *; }
+-keepattributes EnclosingMethod
+-keepattributes InnerClasses
+-keep class androidx.room.paging.** { *; }
+-keep class androidx.room.** { *; }
+-dontwarn androidx.room.paging.**

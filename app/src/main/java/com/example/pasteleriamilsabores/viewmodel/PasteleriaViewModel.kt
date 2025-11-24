@@ -18,9 +18,13 @@ import kotlinx.coroutines.flow.stateIn
 
 class PasteleriaViewModel(
     application: Application,
-    private val repository: PasteleriaRepository = PasteleriaRepository(PasteleriaDatabase.getDatabase(application).productoDao())
+    private val repository: PasteleriaRepository
 ) : AndroidViewModel(application) {
 
+    constructor(application: Application) : this(
+        application,
+        PasteleriaRepository(PasteleriaDatabase.getDatabase(application).productoDao())
+    )
     private val _postresInspiracion = MutableStateFlow<List<MealApi>>(emptyList())
     val postresInspiracion: StateFlow<List<MealApi>> = _postresInspiracion.asStateFlow()
     private val _cargandoInspiracion = MutableStateFlow(true)
