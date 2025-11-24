@@ -46,29 +46,29 @@ android {
 
 dependencies {
 
-    testImplementation("io.mockk:mockk:1.14.6")
-    testImplementation("io.mockk:mockk-android:1.14.6")
+    testImplementation("io.mockk:mockk:1.13.12")
+    testImplementation("io.mockk:mockk-android:1.13.12")
 
-    testImplementation("io.kotest:kotest-runner-junit5:6.0.5")
-    testImplementation("io.kotest:kotest-assertions-core:6.0.5")
-    testImplementation("io.kotest:kotest-property:6.0.5")
+    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
+    testImplementation("io.kotest:kotest-property:5.9.1")
 
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 
     testImplementation("androidx.arch.core:core-testing:2.2.0")
 
 
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
     implementation("io.coil-kt:coil-compose:2.7.0")
-    implementation("com.mapbox.maps:android:11.16.0")
-    implementation("androidx.appcompat:appcompat:1.7.1")
-    implementation("com.google.android.gms:play-services-location:21.3.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
-    val room_version = "2.8.4"
+    implementation("com.mapbox.maps:android:11.15.3")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.gms:play-services-location:21.2.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.0-beta01")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
@@ -87,7 +87,6 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-
 }
 tasks.withType<Test> {
     useJUnitPlatform()
