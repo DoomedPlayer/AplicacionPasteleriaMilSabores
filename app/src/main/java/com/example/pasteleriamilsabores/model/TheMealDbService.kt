@@ -2,10 +2,13 @@ package com.example.pasteleriamilsabores.model
 
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.Query
 
 interface TheMealDbService {
     @GET("filter.php?c=Dessert")
     suspend fun getPostresInternacionales(): Response<MealResponse>
+    @GET("lookup.php")
+    suspend fun getDetallePostre(@Query("i") id: String): Response<MealResponse>
 }
 
 object RetrofitMealClient{

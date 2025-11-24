@@ -39,4 +39,12 @@ class PasteleriaRepository(private val productoDao: ProductoDao) {
     suspend fun insertarProductoManual(producto: Producto){
         productoDao.insert(producto)
     }
+
+    suspend fun actualizarProducto(producto: Producto) {
+        productoDao.update(producto)
+    }
+
+    suspend fun eliminarProducto(producto: Producto) {
+        productoDao.delete(producto)
+    }
 }

@@ -36,8 +36,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.pasteleriamilsabores.model.MealApi
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import coil.request.ImageRequest
 
+enum class ModoInteraccion { NORMAL, EDITAR, ELIMINAR }
 @Composable
 fun PasteleriaApp(){
     val systemDarkMode = isSystemInDarkTheme()
@@ -59,9 +62,10 @@ fun PasteleriaScreen(
     viewModel: PasteleriaViewModel,
     onNavigateToForm: ()  -> Unit,
     onNavigateToPago: ()  -> Unit,
+    onNavigateToModificar: (Int)  -> Unit,
     isDarkMode: Boolean,
     onToggleDarkMode: () -> Unit
-){
+) {
     val carritoItems = viewModel.carrito.value
     val productos by viewModel.productos.collectAsStateWithLifecycle()
     val postresInspiracion by viewModel.postresInspiracion.collectAsStateWithLifecycle()
@@ -69,45 +73,160 @@ fun PasteleriaScreen(
     val total = viewModel.totalCarrito
     val carritoCount = carritoItems.sumOf { it.cantidad }
     var mostrarCarrito by remember { mutableStateOf(false) }
+    val recetaSeleccionada by viewModel.recetaSeleccionada.collectAsStateWithLifecycle()
+    val cargandoReceta by viewModel.cargandoReceta.collectAsStateWithLifecycle()
+    var menuExpandido by remember { mutableStateOf(false) }
+    var modoActual by remember { mutableStateOf(ModoInteraccion.NORMAL) }
     Scaffold(
-        topBar = {
-            TopBarPasteleria(
-                carritoItemCount = carritoCount,
-                onCarritoClick = { mostrarCarrito = true },
-                isDarkMode = isDarkMode,
-                onToggleDarkMode = onToggleDarkMode
-            )
+        topBar = { /* ... Tu TopBar existente ... */
+            TopBarPasteleria(carritoCount, { mostrarCarrito = true }, isDarkMode, onToggleDarkMode)
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onNavigateToForm) {
-                Icon(Icons.Filled.Add, contentDescription = "Añadir Producto")
+            Column(horizontalAlignment = Alignment.End) {
+                if (menuExpandido) {
+                    FloatingActionButton(
+                        onClick = {
+                            menuExpandido = false; modoActual =
+                            ModoInteraccion.NORMAL; onNavigateToForm()
+                        },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.padding(bottom = 8.dp).size(48.dp)
+                    ) { Icon(Icons.Filled.Add, "Agregar Nuevo") }
+
+                    FloatingActionButton(
+                        onClick = {
+                            menuExpandido = false
+                            modoActual =
+                                if (modoActual == ModoInteraccion.EDITAR) ModoInteraccion.NORMAL else ModoInteraccion.EDITAR
+                        },
+                        containerColor = if (modoActual == ModoInteraccion.EDITAR) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.padding(bottom = 8.dp).size(48.dp)
+                    ) { Icon(Icons.Filled.Edit, "Modificar") }
+
+                    FloatingActionButton(
+                        onClick = {
+                            menuExpandido = false
+                            modoActual =
+                                if (modoActual == ModoInteraccion.ELIMINAR) ModoInteraccion.NORMAL else ModoInteraccion.ELIMINAR
+                        },
+                        containerColor = if (modoActual == ModoInteraccion.ELIMINAR) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.padding(bottom = 8.dp).size(48.dp)
+                    ) { Icon(Icons.Filled.Delete, "Eliminar") }
+                }
+
+                // Botón Principal (Configuración)
+                FloatingActionButton(onClick = { menuExpandido = !menuExpandido }) {
+                    Icon(if (menuExpandido) Icons.Filled.Close else Icons.Filled.Settings, "Config")
+                }
             }
         }
 
-    ) {
-        paddingValues ->
-        ContenidoPrincipalPasteleria(
-            paddingValues=paddingValues,
-            productos= productos,
-            postresInspiracion = postresInspiracion,
-            onAgregarClick = viewModel::agregarCarrito,
-            onFavoriteClick = viewModel::toggleFavorito,
-            cargandoInspiracion = cargandoInspiracion
-        )
-    }
-    if (mostrarCarrito){
-        ModalBottomSheet(
-            onDismissRequest = {mostrarCarrito = false},
-            sheetState = rememberModalBottomSheetState()
-        ) {
-            CarritoSheetContent(
-                carritoItems = carritoItems,
-                onModificarCantidad = viewModel::modificarCantidad,
-                total = total,
-                onCerrar = {mostrarCarrito = false},
-                onProcederPago = {
-                    mostrarCarrito = false
-                    onNavigateToPago()
+    ) { paddingValues ->
+        Column(modifier = Modifier.padding(paddingValues)) {
+            if (modoActual != ModoInteraccion.NORMAL) {
+                Surface(
+                    color = if (modoActual == ModoInteraccion.ELIMINAR) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = if (modoActual == ModoInteraccion.EDITAR) "SELECCIONA PARA EDITAR" else "SELECCIONA PARA ELIMINAR",
+                        color = MaterialTheme.colorScheme.onError,
+                        modifier = Modifier.padding(8.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+            ContenidoPrincipalPasteleria(
+                paddingValues = PaddingValues(0.dp), // Ya controlamos el padding arriba
+                productos = productos,
+                postresInspiracion = postresInspiracion,
+                cargandoInspiracion = cargandoInspiracion,
+                onAgregarClick = { producto ->
+                    // LÓGICA MAESTRA: Qué hacer al tocar un producto según el modo
+                    when (modoActual) {
+                        ModoInteraccion.NORMAL -> viewModel.agregarCarrito(producto)
+                        ModoInteraccion.EDITAR -> {
+                            onNavigateToModificar(producto.code)
+                            modoActual =
+                                ModoInteraccion.NORMAL // Opcional: salir del modo editar tras click
+                        }
+
+                        ModoInteraccion.ELIMINAR -> viewModel.eliminarProducto(producto)
+                    }
+                },
+                onInspiracionClick = { idMeal -> viewModel.seleccionarRecetaInspiracion(idMeal) },
+                onFavoriteClick = viewModel::toggleFavorito,
+                modoActual = modoActual // Pasamos el modo a la lista
+            )
+        }
+
+        if (mostrarCarrito) {
+            ModalBottomSheet(
+                onDismissRequest = { mostrarCarrito = false },
+                sheetState = rememberModalBottomSheetState()
+            ) {
+                CarritoSheetContent(
+                    carritoItems = carritoItems,
+                    onModificarCantidad = viewModel::modificarCantidad,
+                    total = total,
+                    onCerrar = { mostrarCarrito = false },
+                    onProcederPago = {
+                        mostrarCarrito = false
+                        onNavigateToPago()
+                    }
+                )
+            }
+        }
+        if (cargandoReceta) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                CircularProgressIndicator()
+            }
+        }
+        recetaSeleccionada?.let { receta ->
+            AlertDialog(
+                onDismissRequest = { viewModel.cerrarModalReceta() },
+                title = {
+                    Text(text = receta.name, fontWeight = FontWeight.Bold)
+                },
+                text = {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        // Imagen
+                        val context = androidx.compose.ui.platform.LocalContext.current
+                        Image(
+                            painter = rememberAsyncImagePainter(
+                                model = ImageRequest.Builder(context)
+                                    .data(receta.image.replace("http:","https:")) // Fix seguridad http
+                                    .crossfade(true).build()
+                            ),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text("Ingredientes:", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        receta.obtenerIngredientesFormat().forEach { ing ->
+                            Text(text = ing, style = MaterialTheme.typography.bodyMedium)
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text("Instrucciones:", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = receta.instructions ?: "Sin instrucciones disponibles.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Justify
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.cerrarModalReceta() }) {
+                        Text("Cerrar")
+                    }
                 }
             )
         }
@@ -116,13 +235,15 @@ fun PasteleriaScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBarPasteleria(carritoItemCount: Int, onCarritoClick: () -> Unit,
-                     isDarkMode: Boolean,
-                     onToggleDarkMode: () -> Unit){
+fun TopBarPasteleria(
+    carritoItemCount: Int, onCarritoClick: () -> Unit,
+    isDarkMode: Boolean,
+    onToggleDarkMode: () -> Unit
+) {
     TopAppBar(
         title = {
             Text(
-                text= "Pasteleria Mil Sabores",
+                text = "Pasteleria Mil Sabores",
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -138,8 +259,8 @@ fun TopBarPasteleria(carritoItemCount: Int, onCarritoClick: () -> Unit,
 
             BadgedBox(
                 badge = {
-                    if (carritoItemCount > 0){
-                        Badge { Text(carritoItemCount.toString())}
+                    if (carritoItemCount > 0) {
+                        Badge { Text(carritoItemCount.toString()) }
                     }
                 }
             ) {
@@ -160,9 +281,11 @@ fun ContenidoPrincipalPasteleria(
     productos: List<Producto>,
     postresInspiracion: List<MealApi>,
     cargandoInspiracion: Boolean,
+    onInspiracionClick: (String) -> Unit,
     onAgregarClick: (Producto) -> Unit,
-    onFavoriteClick: (Producto) -> Unit
-){
+    onFavoriteClick: (Producto) -> Unit,
+    modoActual: ModoInteraccion
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -197,91 +320,113 @@ fun ContenidoPrincipalPasteleria(
                         }
                     } else {
                         items(postresInspiracion) { meal ->
-                            CardInspiracion(meal)
+                            CardInspiracion(
+                                meal = meal,
+                                onClick = { onInspiracionClick(meal.id) }
+                            )
                         }
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
-        items(productos, key = {it.code}){ producto ->
+        items(productos, key = { it.code }) { producto ->
             CardProductoPasteleria(
-                producto= producto,
-                onAgregarClick = { onAgregarClick(producto)},
-                onFavoriteClick = { onFavoriteClick(producto)}
+                producto = producto,
+                onAgregarClick = { onAgregarClick(producto) },
+                onFavoriteClick = { onFavoriteClick(producto) },
+                modoActual = modoActual
             )
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CardProductoPasteleria(producto: Producto, onAgregarClick: () -> Unit, onFavoriteClick: () -> Unit){
+fun CardProductoPasteleria(
+    producto: Producto,
+    onAgregarClick: () -> Unit,
+    onFavoriteClick: () -> Unit,
+    modoActual: ModoInteraccion
+){
+    // Cambiamos el estilo de la tarjeta según el modo para dar feedback visual
+    val containerColor = when(modoActual) {
+        ModoInteraccion.ELIMINAR -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+        ModoInteraccion.EDITAR -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+        else -> MaterialTheme.colorScheme.surface
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(12.dp)
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        shape = RoundedCornerShape(12.dp),
+        onClick = {
+            // Si estamos en modo edición/borrado, hacer click en la tarjeta dispara la acción
+            if (modoActual != ModoInteraccion.NORMAL) onAgregarClick()
+        }
     ){
         Box(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // ... (Código de imagen igual) ...
                 val imageUri = producto.image.let { Uri.parse(it) }
-                val painter = if (imageUri != null) {
-                    rememberAsyncImagePainter(model = imageUri)
-                } else {
-                    painterResource(id = R.drawable.ic_default_cake)
-                }
+                val painter = if (imageUri != null) rememberAsyncImagePainter(model = imageUri) else painterResource(id = R.drawable.ic_launcher_foreground) // Ajusta tu recurso default
 
                 Image(
                     painter = painter,
                     contentDescription = producto.name,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(90.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                    modifier = Modifier.size(90.dp).clip(RoundedCornerShape(8.dp))
                 )
 
                 Spacer(modifier = Modifier.width(16.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = producto.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "$${producto.price}",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
-                Button(
-                    onClick = onAgregarClick,
-                    modifier = Modifier.padding(start = 8.dp)
-                ) {
-                    Icon(
-                        Icons.Filled.Add,
-                        contentDescription = "Añadir a carrito",
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Text(text = producto.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(text = "$${producto.price}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                 }
 
+                // Botón de acción: Cambia el ícono según el modo
+                IconButton(
+                    onClick = onAgregarClick,
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .background(
+                            when(modoActual){
+                                ModoInteraccion.ELIMINAR -> MaterialTheme.colorScheme.error
+                                ModoInteraccion.EDITAR -> MaterialTheme.colorScheme.primary
+                                else -> MaterialTheme.colorScheme.primaryContainer
+                            },
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                ) {
+                    Icon(
+                        imageVector = when(modoActual) {
+                            ModoInteraccion.ELIMINAR -> Icons.Filled.Delete
+                            ModoInteraccion.EDITAR -> Icons.Filled.Edit
+                            else -> Icons.Filled.Add
+                        },
+                        contentDescription = "Acción",
+                        tint = if (modoActual != ModoInteraccion.NORMAL) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun CardInspiracion(meal: MealApi) {
+fun CardInspiracion(meal: MealApi, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .width(160.dp)
             .height(180.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        onClick = onClick
     ) {
         Column {
             val context = androidx.compose.ui.platform.LocalContext.current
@@ -447,7 +592,8 @@ fun PasteleriaPreview(){
             onNavigateToForm = {},
             onNavigateToPago = {},
             isDarkMode = isDarkMode,
-            onToggleDarkMode = {}
+            onToggleDarkMode = {},
+            onNavigateToModificar ={}
         )
     }
 }

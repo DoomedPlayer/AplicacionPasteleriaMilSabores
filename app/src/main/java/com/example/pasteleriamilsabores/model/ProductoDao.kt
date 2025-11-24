@@ -1,9 +1,11 @@
 package com.example.pasteleriamilsabores.model
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -22,5 +24,11 @@ interface ProductoDao {
 
     @Query("SELECT code FROM productos WHERE isFavorite = 1")
     suspend fun getFavoriteIds(): List<Int>
+
+    @Update
+    suspend fun update(producto: Producto)
+
+    @Delete
+    suspend fun delete(producto: Producto)
 
 }

@@ -9,19 +9,22 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pasteleriamilsabores.view.PasteleriaScreen
 import com.example.pasteleriamilsabores.view.FormularioScreen
 import com.example.pasteleriamilsabores.view.PagoScreen
+import com.example.pasteleriamilsabores.view.ModificarProducto
 import com.example.pasteleriamilsabores.viewmodel.PasteleriaViewModel
 
 sealed class PasteleriaVista{
     data object Lista: PasteleriaVista()
     data object Formulario: PasteleriaVista()
     data object Pago: PasteleriaVista()
+    data class Modificar(val id: Int) : PasteleriaVista()
 }
 
 
 
 @Composable
 fun PasteleriaHost(
-    viewModel: PasteleriaViewModel = viewModel(),isDarkMode: Boolean,
+    viewModel: PasteleriaViewModel = viewModel(),
+    isDarkMode: Boolean,
     onToggleDarkMode: () -> Unit
 ){
 
@@ -29,13 +32,17 @@ fun PasteleriaHost(
     val navigateToForm: () -> Unit = {vistaActual = PasteleriaVista.Formulario}
     val navigateToList: () -> Unit = {vistaActual = PasteleriaVista.Lista}
     val navigateToPago: () -> Unit = {vistaActual = PasteleriaVista.Pago}
+    val navigateToModificar: (Int) -> Unit = { idProducto ->
+        vistaActual = PasteleriaVista.Modificar(idProducto)
+    }
 
-    when (vistaActual){
+    when (val estado = vistaActual){
         is PasteleriaVista.Lista ->{
             PasteleriaScreen(
                 viewModel = viewModel,
                 onNavigateToForm = navigateToForm,
                 onNavigateToPago = navigateToPago,
+                onNavigateToModificar = navigateToModificar,
                 isDarkMode = isDarkMode,
                 onToggleDarkMode = onToggleDarkMode
             )
@@ -49,6 +56,13 @@ fun PasteleriaHost(
         is PasteleriaVista.Pago -> {
             PagoScreen(
                 viewModel = viewModel,
+                onNavigateBack = navigateToList
+            )
+        }
+        is PasteleriaVista.Modificar -> {
+            ModificarProducto(
+                viewModel = viewModel,
+                productoId = estado.id,
                 onNavigateBack = navigateToList
             )
         }

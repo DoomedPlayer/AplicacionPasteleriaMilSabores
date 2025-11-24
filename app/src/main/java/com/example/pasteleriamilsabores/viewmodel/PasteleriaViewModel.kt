@@ -25,6 +25,11 @@ class PasteleriaViewModel(application: Application) : AndroidViewModel(applicati
     val postresInspiracion: StateFlow<List<MealApi>> = _postresInspiracion.asStateFlow()
     private val _cargandoInspiracion = MutableStateFlow(true)
     val cargandoInspiracion: StateFlow<Boolean> = _cargandoInspiracion.asStateFlow()
+    private val _recetaSeleccionada = MutableStateFlow<MealApi?>(null)
+    val recetaSeleccionada: StateFlow<MealApi?> = _recetaSeleccionada.asStateFlow()
+
+    private val _cargandoReceta = MutableStateFlow(false)
+    val cargandoReceta: StateFlow<Boolean> = _cargandoReceta.asStateFlow()
 
     val productos: StateFlow<List<Producto>> = repository.productos
         .stateIn(
@@ -103,6 +108,28 @@ class PasteleriaViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
+    fun seleccionarRecetaInspiracion(idMeal: String) {
+        viewModelScope.launch {
+            _cargandoReceta.value = true
+            _recetaSeleccionada.value = null // Limpiamos la anterior para que no parpadee
+            try {
+                val response = RetrofitMealClient.service.getDetallePostre(idMeal)
+                if (response.isSuccessful) {
+                    // La API devuelve una lista de 1 elemento
+                    val detalle = response.body()?.meals?.firstOrNull()
+                    _recetaSeleccionada.value = detalle
+                }
+            } catch (e: Exception) {
+                Log.e("API_DETAIL", "Error: ${e.message}")
+            } finally {
+                _cargandoReceta.value = false
+            }
+        }
+    }
+
+    fun cerrarModalReceta() {
+        _recetaSeleccionada.value = null
+    }
     fun agregarNuevoProducto(id:Int,nombre: String, descripcion: String, precio: Int,categoria:String,tipo:String, imagen: Uri?){
         viewModelScope.launch {
             val nuevoProducto = Producto(
@@ -116,6 +143,33 @@ class PasteleriaViewModel(application: Application) : AndroidViewModel(applicati
             )
             repository.insertarProductoManual(nuevoProducto)
         }
+    }
+
+    fun actualizarProducto(id: Int, nombre: String, descripcion: String, precio: Int, imagen: Uri?) {
+        viewModelScope.launch {
+            val productoOriginal = productos.value.find { it.code == id }
+
+            if (productoOriginal != null) {
+                val productoActualizado = productoOriginal.copy(
+                    name = nombre,
+                    description = descripcion,
+                    price = precio,
+                    image = imagen?.toString() ?: productoOriginal.image
+                )
+                repository.actualizarProducto(productoActualizado)
+            }
+        }
+    }
+
+    fun eliminarProducto(producto: Producto) {
+        viewModelScope.launch {
+            repository.eliminarProducto(producto)
+            _carrito.value = _carrito.value.filter { it.producto.code != producto.code }
+        }
+    }
+
+    fun obtenerProductoPorId(id: Int): Producto? {
+        return productos.value.find { it.code == id }
     }
 
 }
